@@ -1,73 +1,32 @@
-#compdef riak riak-admin
+#compdef riak
 
-(( $+functions[_riak_commands] )) ||
-_riak_commands () {
-  _values 'riak commands' \
-    'start[Starts the Riak node in the background]' \
-    'stop[Stops the running Riak node]' \
-    'restart[Stops and then starts the running Riak node without exiting Erlang VM]' \
-    'reboot[Stops and then starts the running Riak node, exiting Erlang VM]' \
-    'ping[Checks that the Riak node is running]' \
-    'console[Starts the Riak node in the foreground with Erlang shell]' \
-    'attach[Attaches to the console of a Riak node running in the background, with Erlang shell]' \
-    'chkconfing[Checks whether the app.config is valid]' \
-    && ret=0
+_riak () {
+  local -a _1st_arguments
+  _1st_arguments=(
+    start:'Starts the Riak node in the background'
+    stop:'Stops the running Riak node'
+    restart:'Stops and then starts the running Riak node without exiting Erlang VM'
+    reboot:'Stops and then starts the running Riak node, exiting Erlang VM'
+    ping:'Checks that the Riak node is running'
+    console:'Starts the Riak node in the foreground with Erlang shell'
+    attach:'Attaches to the console of a Riak node running in the background, with Erlang shell'
+    chkconfing:'Checks whether the app.config is valid'
+    # escript:''
+    # getpid:'Show current pid of Riak node'
+    # version:'Show version'
+  )
 
-  return ret
-}
+  local context state line expl
+  _arguments \
+    '*:: :->commands' && return 0
 
-(( $+functions[_riak-admin_commands] )) ||
-_riak-admin_commands () {
-  if [[ "$words[1]" == "cluster" ]]; then
-    _values 'riak-admin cluster commands' \
-      'join[Join this node to the cluster containing]' \
-      'leave[Instruct this node to leave the cluster and shutdown]' \
-      'force-remove[Remove <node> from the cluster without first handing off data partitions]' \
-      'replace[Instruct <node1> to transfer all data partitions to <node2>]' \
-      'force-replace[Reassign all partitions owned by <node1> to <node2> without first handing off data]' \
-      'plan[Display the currently staged cluster changes]' \
-      'clear[Clear the currently staged cluster changes]' \
-      'commit[Commit the currently staged cluster changes]' \
-      && ret=0
-
-  else
-    _values 'riak-admin-commands' \
-      'cluster[provides a multi-phased approach to cluster administration]' \
-      'join[Joins the running node to another running node]' \
-      'leave[Causes the node to leave the cluster in which it participates]' \
-      'backup[Backs up the data from the node or entire cluster into a file]' \
-      'restore[Restores data to the node or cluster from a previous backup]' \
-      'test[Runs a test of a few standard Riak operations against the running node]' \
-      'reip[Renames a node]' \
-      'js-reload[Forces the embedded Javascript virtual machines to be restarted]' \
-      'services[Lists available services on the node]' \
-      'wait-for-service[Waits on a specific watchable service to be available]' \
-      'ringready[Checks whether all nodes in the cluster agree on the ring state]' \
-      'transfers[Identifies nodes that are awaiting transfer of one or more partitions]' \
-      'transfer-limit[Change the handoff_concurrency limit]' \
-      'force-remove[Immediately removes a node from the cluster without ensuring handoff]' \
-      'down[Marks a node as down]' \
-      'cluster-info[Output system information from a Riak cluster]' \
-      'member-status[Prints the current status of all cluster members]' \
-      'ring-status[Outputs the current ring status]' \
-      'vnode-status[Outputs the status of all vnodes the are running on the local node]' \
-      'diag[Run diagnostic checks against <node>]' \
-      'status[Prints status information]' \
-      'top[Top provides information about what the Erlang processes inside of Riak are doing]' \
-      && ret=0
+  if (( CURRENT == 1 )); then
+    _describe -t riak-commands 'riak command' _1st_arguments
+    return
   fi
-
-  return ret
 }
 
-_arguments -C \
-  ': :->subcommand' \
-  '*:: :->option-or-command' \
-  && return
-
-_call_function ret _${service}_commands
-
-return ret
+_riak "$@"
 
 # Local variables:
 # mode: shell-script
