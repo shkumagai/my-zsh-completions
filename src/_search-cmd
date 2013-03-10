@@ -1,0 +1,65 @@
+#compdef search-cmd
+#
+# search-cmd:
+#  - clear-schema-cache      -- clear-schema-cache
+#  - set-schema              -- set-schema [INDEX] SCHEMAFILE
+#  - show-schema             -- show-schema [INDEX]
+#  - search                  -- search [INDEX] QUERY
+#  - search-doc              -- search-doc [INDEX] QUERY
+#  - explain                 -- explain [INDEX] QUERY
+#  - index                   -- index [INDEX] PATH
+#  - delete                  -- delete [INDEX] PATH
+#  - solr                    -- solr [INDEX] PATH
+#  - install                 -- install BUCKET
+#  - uninstall               -- uninstall BUCKET
+#  - test                    -- test PATH
+
+(( $+functions[_search-cmd_commands] )) ||
+_search-cmd () {
+  local -a _1st_arguments
+  _1st_arguments=(
+    set-schema:'Set the schema for a given index'
+    show-schema:'Show the schema for a given index'
+    clear-schema-cache:'Clear the schema cache on a local node'
+    search:'Execute the given query on the index returning the document id, properties, and score.'
+    search-doc:'Much like "search" but also returns all the fields too'
+    explain:'Outputs the query plan for the specified index query'
+    index:'Index the document at the given path'
+    delete:'Used to delete a document from the index'
+    solr:'Index solr documents'
+    install:'Install the Search precommit hook on the given bucket'
+    uninstall:'Uninstall the Search precommit hook on the given bucket'
+    test:'Run the Search test script at the given path'
+  )
+
+  local context state line expl
+  _arguments \
+    '*:: :->commands' && return 0
+
+  if (( CURRENT == 1 )); then
+    _describe -t search-cmd-commands 'search-cmd command' _1st_arguments
+    return
+  fi
+
+  case "$words[1]" in
+    set-schema|index|delete|solr|test)
+      _files
+      ;;
+    install|uninstall)
+      # not implemented
+      ;;
+    *)
+      # nothing to do
+      ;;
+  esac
+}
+
+_search-cmd "$@"
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 2
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: sw=2 ts=2 et filetype=sh
