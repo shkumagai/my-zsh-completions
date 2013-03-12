@@ -1,18 +1,60 @@
 #compdef search-cmd
-#
-# search-cmd:
-#  - clear-schema-cache      -- clear-schema-cache
-#  - set-schema              -- set-schema [INDEX] SCHEMAFILE
-#  - show-schema             -- show-schema [INDEX]
-#  - search                  -- search [INDEX] QUERY
-#  - search-doc              -- search-doc [INDEX] QUERY
-#  - explain                 -- explain [INDEX] QUERY
-#  - index                   -- index [INDEX] PATH
-#  - delete                  -- delete [INDEX] PATH
-#  - solr                    -- solr [INDEX] PATH
-#  - install                 -- install BUCKET
-#  - uninstall               -- uninstall BUCKET
-#  - test                    -- test PATH
+
+typeset -g riak_root riak_app_config riak_http
+
+(( $+functions[__riak-admin_get_root] )) ||
+__riak-admin_get_root () {
+  riak_root=(${(f)"$(command ps -ef \
+                   | command grep beam \
+                   | command grep -v grep \
+                   | command sed 's/^.* -root \(.*\) -progname.*$/\1/')"})
+  if (( $#riak_root > 1 )); then
+    riak_root=(${riak_root[1]})
+  fi
+}
+
+(( $+functions[__riak-admin_get_app_config] )) ||
+__riak-admin_get_app_config () {
+  riak_app_config=(${(f)"$(command ps -ef \
+                         | command grep beam \
+                         | command grep -v grep \
+                         | command sed 's/^.* -config \([^ ]*\) .*$/\1/')"})
+  # print "<$riak_app_config>"
+  if (( $#riak_app_config != 1 )); then
+    riak_app_config=($(echo "${riak_root}/etc/app.config"))
+  fi
+}
+
+(( $+functions[__riak-admin_get_config_http])) ||
+__riak-admin_get_config_http () {
+  local expl app_config
+
+  [[ -z "$riak_app_config" ]] && __riak-admin_get_app_config
+
+  app_config=${(F)"$(command cat ${riak_app_config})"}
+  riak_http=(${(s., .)${${${(f)${app_config#*?http, \[}%%\]*?}//[ \"{}]/}/,/:}})
+  # print "<$riak_http> <$#riak_http>"
+
+  if (( $#riak_http == 0 )); then
+    riak_http=(
+      127.0.0.1:8091
+    )
+  fi
+}
+
+(( $+functions[_riak-admin_buckets] )) ||
+_riak-admin_buckets () {
+  local url expl
+  local -a riak_buckets
+
+  [[ -z "$riak_http" ]] && __riak-admin_get_config_http
+
+  url="http://${riak_http[1]}/buckets?buckets=true"
+
+  riak_buckets=(${(s.,.)${${${${(f)"$(command curl -q -G ${url} 2>/dev/null)"}//*?\[/}//\]*?}//\"/}})
+
+  _describe -t riak-buckets 'riak buckets' riak_buckets
+}
 
 (( $+functions[_search-cmd_commands] )) ||
 _search-cmd () {
@@ -46,7 +88,7 @@ _search-cmd () {
       _files
       ;;
     install|uninstall)
-      # not implemented
+      _riak-admin_buckets
       ;;
     *)
       # nothing to do

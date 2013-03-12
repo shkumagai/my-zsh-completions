@@ -1,6 +1,6 @@
 #compdef riak-admin
 
-typeset -g riak_root
+typeset -g riak_root riak_app_config riak_http
 
 (( $+functions[__riak-admin_get_root] )) ||
 __riak-admin_get_root () {
@@ -13,14 +13,39 @@ __riak-admin_get_root () {
   fi
 }
 
+(( $+functions[__riak-admin_get_app_config] )) ||
+__riak-admin_get_app_config () {
+  riak_app_config=(${(f)"$(command ps -ef \
+                         | command grep beam \
+                         | command grep -v grep \
+                         | command sed 's/^.* -config \(.*app.config\) .*$/\1/')"})
+  if (( $#riak_app_config == 1 )); then
+    riak_app_config=($(echo "${riak_root}/etc/app.config"))
+  fi
+}
+
+(( $+functions[__riak-admin_get_config_http])) ||
+__riak-admin_get_config_http () {
+  local expl
+
+  [[ -z "$riak_app_config" ]] && __riak-admin_get_app_config
+
+  riak_http=(${(s.,.)${(f)"$(command grep -E '[^%]\{http, .*},$' ${riak_app_config} \
+                           | command sed 's/.*\"\(.*\)\", \([0-9]*\) }.*$/\1,\2/')"}})
+  if (( $#riak_http != 2 )); then
+    riak_http=(
+      127.0.0.1
+      8091
+    )
+  fi
+}
+
 (( $+functions[_riak-admin_nodes] )) ||
 _riak-admin_nodes () {
   local expl
   local -a riak_nodes
 
-  if [[ -z "$riak_root" ]]; then
-    __riak-admin_get_root
-  fi
+  [[ -z "$riak_root" ]] && __riak-admin_get_root
 
   if [[ -f "${riak_root}/bin/riak-admin" ]]; then
     riak_nodes=(${(s.,.)${${${${(f)"$(command ${riak_root}/bin/riak-admin status \
