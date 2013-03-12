@@ -10,7 +10,7 @@ _riak () {
     ping:'Checks that the Riak node is running'
     console:'Starts the Riak node in the foreground with Erlang shell'
     attach:'Attaches to the console of a Riak node running in the background, with Erlang shell'
-    chkconfing:'Checks whether the app.config is valid'
+    chkconfig:'Checks whether the app.config is valid'
     # escript:''
     # getpid:'Show current pid of Riak node'
     # version:'Show version'
