@@ -1,0 +1,120 @@
+#compdef tx
+
+local state ret=1
+
+local -a global_opts
+global_opts=(
+  '(--debug -d)'{--debug,-d}'[enable debug messages]'
+  '(--quiet -q)'{--quiet,-q}"[don't print status messages to stdout]"
+  '(--root -r)'{--root=,-r}'[change root directory (default is cwd)]'
+  --traceback'[print full traceback on exceptions]'
+  --disable-colors'[disable colors in the output of commands]'
+)
+
+typeset -A opt_args
+_arguments \
+  $global_opts \
+  ':subcommand:->subcommand' \
+  '*::options:->options' && ret=0
+
+case $state in
+  subcommand)
+    local subcommands
+    subcommands=(
+      "delete:Delete an accessible resource or translation in a remote server."
+      "help:List all available commands"
+      "init:Initialize a new transifex project."
+      "pull:Pull files from remote server to local repository"
+      "push:Push local files to remote server"
+      "set:Add local or remote files under transifex"
+      "status:Print status of current project"
+    )
+
+    _describe -t subcommands 'tx subcommands' subcommands && ret=0
+    ;;
+
+  options)
+    local -a args
+    args=(
+      '(--help -h)'{--help,-h}'[show this help message and exit]'
+    )
+
+    echo "[$words[1] $current]"
+    case "$words[1]" in
+      init)
+        args+=(
+          '--host=[Specify a default Transifex host.]:URL:_urls'
+          '--user=[Specify username for Transifex server.]'
+          '--pass=[Specify password for Transifex server.]'
+        )
+        ;;
+
+      delete)
+        args+=(
+          '(--resource -r)'{--resource=,-r+}'[Specify the resource you want to delete (defaults to all)]:resource'
+          '(--language -l)'{--language=,-l+}'[Specify the translation you want to delete]:lang'
+          '(--force -f)'{--force,-f}'[Delete an entity forcefully.]'
+          "--skip[Don't stop on errors.]"
+        )
+        ;;
+
+      pull)
+        args+=(
+          '(--resource -r)'{--resource=,-r+}'[Specify the resource for which you want to pull the translations (defaults to all)]:resource'
+          '(--language -l)'{--language=,-l+}'[Specify which translations you want to pull (defaults to all)]:lang'
+          '(--force -f)'{--force,-f}'[Force download of translations files.]'
+          "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
+          '(--all -a)'{--all,-a}'[Fetch all translation files from server (even new ones)]'
+          '(--source -s)'{--source,-s}'[Force the fetching of the source file (default: False)]'
+          '--disable-overwrite[Use this flag if you want to disable to fetch new translations files and replace existing ones]'
+          '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
+          "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
+        )
+        ;;
+      push)
+        args+=(
+          '(--resource -r)'{--resource=,-r+}'[Specify the resource for which you want to push the translations (defaults to all)]:resource'
+          '(--language -l)'{--language=,-l+}'[Specify which translations you want to push (defaults to all)]:lang'
+          '(--force -f)'{--force,-f}'[Push source files without checking modification times.]'
+          "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
+          '(--source -s)'{--source,-s}'[Push the source file to the server.]'
+          '(--translations -t)'{--translations,-t}'[Push the translation files to the server]'
+          "--no-interactive[Don't require user input when forcing a push.]"
+        )
+        ;;
+      set)
+        args+=(
+          '(--resource -r)'{--resource=,-r+}"[Specify the slug of the resource that you're setting up.]:resource:_path_files -/"
+          "(-l --language --auto-local --auto-remote)--language=:[Specify which translations you want to pull.]:lang"
+          "(-l --language --auto-local --auto-remote)-l+:[Specify which translations you want to pull.]:lang"
+          '(-l --language --auto-local --auto-remote)--auto-local[Used when auto configuring local project.]'
+          '(-l --language --auto-local --auto-remote)--auto-remote[Used when adding remote files from Transifex server.]:url:_urls'
+          "--source[Specify that the given file is a source file (doesn't work with the --auto-* commands).]"
+          '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
+          "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
+          '(--type -t)'{--type,-t}'[Specify the i18n type of the resource(s). This is only needed, if the resource(s) does not exist yet in Transifex.]'
+          '(--source-language -s)'{--source-language=,-s+}'[Specify the source language of a resource (requires --auto-local).]:lang'
+          '(--source-file -f)'{--source-file=,-f+}'[Specify the source file of a resource (requires --auto-local).]:file:_files'
+          '--execute[Execute commands (requires --auto-local).]'
+        )
+        ;;
+      status)
+        args+=(
+          '(--resource -r)'{--resource,-r}'[Speficy resources]'
+        )
+        ;;
+    esac
+
+    _arguments -S $args && ret=0
+    ;;
+esac
+
+return ret
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 2
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: sw=2 ts=2 et filetype=sh
