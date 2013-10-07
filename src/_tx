@@ -39,7 +39,7 @@ case $state in
       '(--help -h)'{--help,-h}'[show this help message and exit]'
     )
 
-    echo "[$words[1] $current]"
+    # echo "[$words[1] $current]"
     case "$words[1]" in
       init)
         args+=(
