@@ -17,6 +17,12 @@ _arguments \
   ':subcommand:->subcommand' \
   '*::options:->options' && ret=0
 
+(( $+functions[_resources] )) ||
+_resources () {
+  local expl
+  _wanted resources expl 'resource' _path_files -W "(translations)"
+}
+
 case $state in
   subcommand)
     local subcommands
@@ -51,7 +57,8 @@ case $state in
 
       delete)
         args+=(
-          '(--resource -r)'{--resource=,-r+}'[Specify the resource you want to delete (defaults to all)]:resource'
+          '(--resource)'-r+'[Specify the resource you want to delete (defaults to all)]:resource:_resources'
+          '(-r)'--resource='[Specify the resource you want to delete (defaults to all)]:resource:_resources'
           '(--language -l)'{--language=,-l+}'[Specify the translation you want to delete]:lang'
           '(--force -f)'{--force,-f}'[Delete an entity forcefully.]'
           "--skip[Don't stop on errors.]"
@@ -60,7 +67,7 @@ case $state in
 
       pull)
         args+=(
-          '(--resource -r)'{--resource=,-r+}'[Specify the resource for which you want to pull the translations (defaults to all)]:resource'
+          '(--resource -r)'{--resource=,-r+}'[Specify the resource for which you want to pull the translations (defaults to all)]:resource:_resources'
           '(--language -l)'{--language=,-l+}'[Specify which translations you want to pull (defaults to all)]:lang'
           '(--force -f)'{--force,-f}'[Force download of translations files.]'
           "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
@@ -73,7 +80,7 @@ case $state in
         ;;
       push)
         args+=(
-          '(--resource -r)'{--resource=,-r+}'[Specify the resource for which you want to push the translations (defaults to all)]:resource'
+          '(--resource -r)'{--resource=,-r+}'[Specify the resource for which you want to push the translations (defaults to all)]:resource:_resources'
           '(--language -l)'{--language=,-l+}'[Specify which translations you want to push (defaults to all)]:lang'
           '(--force -f)'{--force,-f}'[Push source files without checking modification times.]'
           "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
@@ -84,7 +91,7 @@ case $state in
         ;;
       set)
         args+=(
-          '(--resource -r)'{--resource=,-r+}"[Specify the slug of the resource that you're setting up.]:resource:_path_files -/"
+          '(--resource -r)'{--resource=,-r+}"[Specify the slug of the resource that you're setting up.]:resource:_resources "
           "(-l --language --auto-local --auto-remote)--language=:[Specify which translations you want to pull.]:lang"
           "(-l --language --auto-local --auto-remote)-l+:[Specify which translations you want to pull.]:lang"
           '(-l --language --auto-local --auto-remote)--auto-local[Used when auto configuring local project.]'
@@ -105,7 +112,7 @@ case $state in
         ;;
     esac
 
-    _arguments -S $args && ret=0
+    _arguments -C $args && ret=0
     ;;
 esac
 
