@@ -6,168 +6,165 @@ _resources () {
   _wanted resources expl 'resource' _path_files -W "(translations)"
 }
 
-(( $+functions[_languages] )) ||
-_languages () {
+(( $+functions[_tx_get_languages_with_cache] )) ||
+_tx_get_languages_with_cache () {
+  local cache_policy
+  zstyle -s ":completion:${curcontext}:" cache-policy cache_policy
+  if [[ -z "$cache_policy" ]]; then
+    zstyle ":completion:${curcontext}:" cache-policy _tx_langs_caching_policy
+  fi
+
+  typeset -g -a _tx_langs
   local expl
-  local -a langs
-  # local username password
 
-  # username=($(command grep username ${HOME}/.transifexrc | sed 's/^.* //g'))
-  # password=($(command grep password ${HOME}/.transifexrc | sed 's/^.* //g'))
-  # langs=(${${$(command curl -i -L \
-  #                     --user ${username}:${password} \
-  #                     -X GET https://www.transifex.com/api/2/languages/ \
-  #              | command grep code \
-  #              | command sed 's/^.*://g')}/,/})
-
-  # if [[ -z "$langs" ]]; then
-  #   if (( ! -z "$LANG" )); then
-  #     langs=(${(qqq)${${LANG}%%.*?}})
-  #   fi
-  # fi
-
-  langs=(
-    "ach" "ady" "af" "af_ZA" "ak" "sq" "sq_AL" "aln" "am" "am_ET" "ar" "ar_EG"
-    "ar_SA" "ar_SY" "ar_AA" "an" "hy" "hy_AM" "as" "as_IN" "ast" "az" "az_AZ"
-    "bal" "eu" "eu_ES" "be" "be_BY" "be@tarask" "bn" "bn_BD" "bn_IN" "brx" "bs"
-    "bs_BA" "br" "bg" "bg_BG" "my" "my_MM" "ca" "ca_ES" "ca@valencia" "tzm"
-    "hne" "cgg" "zh" "zh_CN" "zh_CN.GB2312" "gan" "hak" "zh_HK" "czh" "cjy"
-    "lzh" "cmn" "mnp" "cdo" "nan" "czo" "cpx" "zh_TW" "zh_TW.Big5" "wuu" "hsn"
-    "yue" "cv" "ksh" "kw" "co" "crh" "hr" "hr_HR" "cs" "cs_CZ" "da" "da_DK" "dv"
-    "nl" "nl_BE" "nl_NL" "dz" "dz_BT" "en" "en_AU" "en_CA" "en_IE" "en_ZA"
-    "en_GB" "en_US" "myv" "eo" "et" "et_EE" "fo" "fo_FO" "fil" "fi" "fi_FI"
-    "frp" "fr" "fr_CA" "fr_FR" "fr_CH" "fur" "ff" "ff_SN" "gd" "gl" "gl_ES" "lg"
-    "ka" "ka_GE" "de" "de_AT" "de_DE" "de_CH" "el" "el_GR" "gu" "gu_IN" "gun"
-    "ht" "ht_HT" "ha" "he" "he_IL" "hi" "hi_IN" "hu" "hu_HU" "is" "is_IS" "ig"
-    "ilo" "id" "id_ID" "ia" "ga" "ga_IE" "it" "it_IT" "ja" "ja_JP" "jv" "kab"
-    "kn" "kn_IN" "pam" "ks" "ks_IN" "csb" "kk" "kk_KZ" "km" "km_KH" "rw" "ky"
-    "tlh" "ko" "ko_KR" "ku" "ku_IQ" "lo" "lo_LA" "la" "lv" "lv_LV" "lij" "li"
-    "ln" "lt" "lt_LT" "en@lolcat" "dsb" "nds" "lb" "mk" "mk_MK" "mai" "mg" "ms"
-    "ml" "ml_IN" "ms_MY" "mt" "mt_MT" "mi" "arn" "mr" "mr_IN" "mw1" "mn" "mn_MN"
-    "nah" "nr" "nap" "ne" "ne_NP" "nia" "nqo" "se" "nso" "no" "nb" "nb_NO"
-    "no_NO" "nn" "nn_NO" "ny" "oc" "or" "or_IN" "om" "os" "pfl" "pa" "pa_IN"
-    "pap" "fa" "fa_IR" "pms" "en@pirate" "pl" "pl_PL" "pt" "pt_BR" "pt_PT" "ps"
-    "ro" "ro_RO" "rm" "ru" "ru@petr1708" "ru_RU" "sah" "sm" "sc" "sco" "sr"
-    "sr@latin" "sr_RS@latin" "sr_RS" "sn" "szl" "sd" "si" "si_LK" "sk" "sk_SK"
-    "sl" "sl_SI" "so" "son" "st" "st_ZA" "sma" "es" "es_AR" "es_BO" "es_CL"
-    "es_CO" "es_CR" "es_DO" "es_EC" "es_SV" "es_419" "es_MX" "es_NI" "es_PA"
-    "es_PY" "es_PE" "es_PR" "es_ES" "es_US" "es_UY" "es_VE" "su" "sw" "sw_KE"
-    "ss" "sv" "sv_FI" "sv_SE" "tl" "tl_PH" "tg" "tg_TJ" "ta" "ta_IN" "ta_LK"
-    "tt" "te" "te_IN" "tet" "th" "th_TH" "bo" "bo_CN" "ti" "to" "ts" "tn" "tr"
-    "tr_TR" "tk" "tk_TM" "udm" "ug" "ug@Latin" "uk" "uk_UA" "hsb" "ur" "ur_PK"
-    "uz" "ve" "vec" "vi" "vi_VN" "vls" "wa" "war" "cy" "cy_GB" "fy" "fy_NL" "wo"
-    "wo_SN" "xh" "yi" "yo" "zu" "zu_ZA"
-  )
-
-  _describe -t languages 'tx available languages' langs
+  if ( (( #_tx_langs == 0 )) || _cache_invalid txlangs ) \
+       && ! _retrieve_cache txlangs; then
+    local _u _p
+    _u=($(command grep username ${HOME}/.transifexrc | sed 's/^.* //g'))
+    _p=($(command grep password ${HOME}/.transifexrc | sed 's/^.* //g'))
+    _tx_langs=(${${(f)"$(
+      command curl -i -L \
+                   --user ${_u}:${_p} \
+                   -X GET https://www.transifex.com/api/2/languages/ 2> /dev/null \
+      | command grep code \
+      | command sed 's/^.*: \"//g')"}/\", /})
+    _store_cache txlangs _tx_langs
+  fi
+  languages=(${_tx_langs})
 }
 
-local state context line
-typeset -A opt_args
+(( $+functions[_tx_get_languages_without_cache] )) ||
+_tx_get_languages_without_cache () {
+  local expl
 
-typeset -a _tx_subcommand
-_tx_subcommand=(
-  "delete:Delete an accessible resource or translation in a remote server."
-  "help:List all available commands"
-  "init:Initialize a new transifex project."
-  "pull:Pull files from remote server to local repository"
-  "push:Push local files to remote server"
-  "set:Add local or remote files under transifex"
-  "status:Print status of current project"
-)
+  languages=(${${LANG%%.*?}} ${${LANG%%.*?}%%_*?})
+}
 
-_arguments -s \
-  '(--debug -d)'{--debug,-d}'[enable debug messages]' \
-  '(--quiet -q)'{--quiet,-q}"[don't print status messages to stdout]" \
-  '(--root -r)'{--root,-r}'=[change root directory (default is cwd)]' \
-  --traceback'[print full traceback on exceptions]' \
-  --disable-colors'[disable colors in the output of commands]' \
-  '*::tx-commands:->subcommands'
+(( $+functions[_tx_langs_caching_policy] )) ||
+_tx_langs_caching_policy () {
+  local -a oldp
+  oldp=( "$1"(Nmw+1) )
+  (( $#oldp ))
+}
 
-if [[ "$state" == "subcommands" ]]; then
-  # print "words=${(qqq)^^words[@]}"
-  # print "CURRENT=$CURRENT"
-
-  if (( CURRENT == 1 )); then
-    _describe -t tx-subcmd "tx subcommands" _tx_subcommand
+(( $+functions[_languages] )) ||
+_languages () {
+  if zstyle -t ":completion:${curcontext}:" use-cache; then
+    _tx_get_languages_with_cache
   else
-    # local curcontext
-    # curcontext="${curcontext%:*:*}:tx-$words[0]:"
-    # print "curcontext=$curcontext words=$words[1]"
-
-    local -a opts
-    opts=(
-      '(-h --help)'{-h,--help}'[show this help message and exit]'
-    )
-
-    case "$words[1]" in
-      init)
-        opts+=(
-          '--host=[Specify a default Transifex host.]:URL:_urls'
-          '--user=[Specify username for Transifex server.]'
-          '--pass=[Specify password for Transifex server.]'
-        )
-        ;;
-
-      delete)
-        opts+=(
-          '(-r --resource)'{-r,--resource}'=[Specify the resource you want to delete (defaults to all)]:resource:_resources'
-          '(-l --language)'{-l,--language}'=[Specify the translation you want to delete]:lang:_languages'
-          '(-f --force)'{-f,--force}'[Delete an entity forcefully.]'
-          "--skip[Don't stop on errors.]"
-        )
-        ;;
-
-      pull)
-        opts+=(
-          '(-r --resource)'{-r,--resource}'=[Specify the resource for which you want to pull the translations (defaults to all)]:resource:_resources'
-          '(-l --language)'{-l,--language}'=[Specify which translations you want to pull (defaults to all)]:lang'
-          '(-f --force)'{-f,--force}'[Force download of translations files.]'
-          "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
-          '(-a --all)'{-a,--all}'[Fetch all translation files from server (even new ones)]'
-          '(-s --source)'{-s,--source}'[Force the fetching of the source file (default: False)]'
-          '--disable-overwrite[Use this flag if you want to disable to fetch new translations files and replace existing ones]'
-          '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
-          "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
-        )
-        ;;
-      push)
-        opts+=(
-          '(-r --resource)'{-r,--resource}'=[Specify the resource for which you want to push the translations (defaults to all)]:resource:_resources'
-          '(-l --language)'{-l,--language}'=[Specify which translations you want to push (defaults to all)]:lang'
-          '(-f --force)'{-f,--force}'[Push source files without checking modification times.]'
-          "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
-          '(-s --source)'{-s,--source}'[Push the source file to the server.]'
-          '(-t --translations)'{-t,--translations}'[Push the translation files to the server]'
-          "--no-interactive[Don't require user input when forcing a push.]"
-        )
-        ;;
-      set)
-        opts+=(
-          '(-r --resource)'{-r,--resource}"=[Specify the slug of the resource that you're setting up.]:resource:_resources"
-          "(-l --language --auto-local --auto-remote)--language=:[Specify which translations you want to pull.]:lang"
-          "(-l --language --auto-local --auto-remote)-l+:[Specify which translations you want to pull.]:lang"
-          '(-l --language --auto-local --auto-remote)--auto-local[Used when auto configuring local project.]'
-          '(-l --language --auto-local --auto-remote)--auto-remote[Used when adding remote files from Transifex server.]:url:_urls'
-          "--source[Specify that the given file is a source file (doesn't work with the --auto-* commands).]"
-          '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
-          "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
-          '(-t --type)'{-t,--type}'[Specify the i18n type of the resource(s). This is only needed, if the resource(s) does not exist yet in Transifex.]'
-          '(-s --source-language)'{-s,--source-language}'=[Specify the source language of a resource (requires --auto-local).]:lang'
-          '(-f --source-file)'{-f,--source-file}'=[Specify the source file of a resource (requires --auto-local).]:file:_files'
-          '--execute[Execute commands (requires --auto-local).]'
-        )
-        ;;
-      status)
-        opts+=(
-          '(-r --resource)'{-r,--resource}'[Speficy the resource]:resource:_resources'
-        )
-        ;;
-    esac
-    # print "opts=${(qqq)opts}"
-    _arguments -s $opts
+    _tx_get_languages_without_cache
   fi
-fi
+
+  # print "languages=$languages"
+  _describe -t languages 'tx available languages' languages
+}
+
+_tx () {
+  local state context line
+  typeset -A opt_args
+
+  typeset -a _tx_subcommand
+  _tx_subcommand=(
+    "delete:Delete an accessible resource or translation in a remote server."
+    "help:List all available commands"
+    "init:Initialize a new transifex project."
+    "pull:Pull files from remote server to local repository"
+    "push:Push local files to remote server"
+    "set:Add local or remote files under transifex"
+    "status:Print status of current project"
+  )
+
+  _arguments -s \
+    '(--debug -d)'{--debug,-d}'[enable debug messages]' \
+    '(--quiet -q)'{--quiet,-q}"[don't print status messages to stdout]" \
+    '(--root -r)'{--root,-r}'=[change root directory (default is cwd)]' \
+    --traceback'[print full traceback on exceptions]' \
+    --disable-colors'[disable colors in the output of commands]' \
+    '*::tx-commands:->subcommands'
+
+  if [[ "$state" == "subcommands" ]]; then
+    # print "words=${(qqq)^^words[@]}"
+    # print "CURRENT=$CURRENT"
+
+    if (( CURRENT == 1 )); then
+      _describe -t tx-subcmd "tx subcommands" _tx_subcommand
+    else
+      local -a opts
+      opts=(
+        '(-h --help)'{-h,--help}'[show this help message and exit]'
+      )
+
+      case "$words[1]" in
+        init)
+          opts+=(
+            '--host=[Specify a default Transifex host.]:URL:_urls'
+            '--user=[Specify username for Transifex server.]'
+            '--pass=[Specify password for Transifex server.]'
+          )
+          ;;
+
+        delete)
+          opts+=(
+            '(-r --resource)'{-r,--resource}'=[Specify the resource you want to delete (defaults to all)]:resource:_resources'
+            '(-l --language)'{-l,--language}'=[Specify the translation you want to delete]:lang:_languages'
+            '(-f --force)'{-f,--force}'[Delete an entity forcefully.]'
+            "--skip[Don't stop on errors.]"
+          )
+          ;;
+
+        pull)
+          opts+=(
+            '(-r --resource)'{-r,--resource}'=[Specify the resource for which you want to pull the translations (defaults to all)]:resource:_resources'
+            '(-l --language)'{-l,--language}'=[Specify which translations you want to pull (defaults to all)]:lang:_languages'
+            '(-f --force)'{-f,--force}'[Force download of translations files.]'
+            "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
+            '(-a --all)'{-a,--all}'[Fetch all translation files from server (even new ones)]'
+            '(-s --source)'{-s,--source}'[Force the fetching of the source file (default: False)]'
+            '--disable-overwrite[Use this flag if you want to disable to fetch new translations files and replace existing ones]'
+            '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
+            "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
+          )
+          ;;
+        push)
+          opts+=(
+            '(-r --resource)'{-r,--resource}'=[Specify the resource for which you want to push the translations (defaults to all)]:resource:_resources'
+            '(-l --language)'{-l,--language}'=[Specify which translations you want to push (defaults to all)]:lang:_languages'
+            '(-f --force)'{-f,--force}'[Push source files without checking modification times.]'
+            "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
+            '(-s --source)'{-s,--source}'[Push the source file to the server.]'
+            '(-t --translations)'{-t,--translations}'[Push the translation files to the server]'
+            "--no-interactive[Don't require user input when forcing a push.]"
+          )
+          ;;
+        set)
+          opts+=(
+            '(-r --resource)'{-r,--resource}"=[Specify the slug of the resource that you're setting up.]:resource:_resources"
+            "(-l --language --auto-local --auto-remote)--language=:[Specify which translations you want to pull.]:lang:_languages"
+            "(-l --language --auto-local --auto-remote)-l=:[Specify which translations you want to pull.]:lang:_languages"
+            '(-l --language --auto-local --auto-remote)--auto-local[Used when auto configuring local project.]'
+            '(-l --language --auto-local --auto-remote)--auto-remote[Used when adding remote files from Transifex server.]:url:_urls'
+            "--source[Specify that the given file is a source file (doesn't work with the --auto-* commands).]"
+            '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
+            "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
+            '(-t --type)'{-t,--type}'[Specify the i18n type of the resource(s). This is only needed, if the resource(s) does not exist yet in Transifex.]'
+            '(-s --source-language)'{-s,--source-language}'=[Specify the source language of a resource (requires --auto-local).]:lang:_languages'
+            '(-f --source-file)'{-f,--source-file}'=[Specify the source file of a resource (requires --auto-local).]:file:_files'
+            '--execute[Execute commands (requires --auto-local).]'
+          )
+          ;;
+        status)
+          opts+=(
+            '(-r --resource)'{-r,--resource}'[Speficy the resource]:resource:_resources'
+          )
+          ;;
+      esac
+      # print "opts=${(qqq)opts}"
+      _arguments -s $opts
+    fi
+  fi
+}
+
+_tx "$@"
 
 # Local variables:
 # mode: shell-script
