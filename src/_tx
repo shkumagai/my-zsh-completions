@@ -55,59 +55,57 @@ _tx () {
       case "$words[1]" in
         init)
           opts+=(
-            '--host=[Specify a default Transifex host.]:URL:_urls'
-            '--user=[Specify username for Transifex server.]'
-            '--pass=[Specify password for Transifex server.]'
+            '--host=[Specify a default Transifex host]:URL:_urls'
+            '--user=[Specify username for Transifex server]'
+            '--pass=[Specify password for Transifex server]'
           )
           ;;
-
         delete)
           opts+=(
-            '(-r --resource)'{-r,--resource}'=[Specify the resource you want to delete (defaults to all)]:resource:_resources'
-            '(-l --language)'{-l,--language}'=[Specify the translation you want to delete]:lang:_languages'
-            '(-f --force)'{-f,--force}'[Delete an entity forcefully.]'
-            "--skip[Don't stop on errors.]"
+            '(-r --resource)'{-r,--resource}'=[Specify the resource]:resource:_resources'
+            '(-l --language)'{-l,--language}'=[Specify the language of translations]:lang:_languages'
+            '(-f --force)'{-f,--force}'[Delete an entity forcefully]'
+            "--skip[Don't stop on errors]"
           )
           ;;
-
         pull)
           opts+=(
-            '(-r --resource)'{-r,--resource}'=[Specify the resource for which you want to pull the translations (defaults to all)]:resource:_resources'
-            '(-l --language)'{-l,--language}'=[Specify which translations you want to pull (defaults to all)]:lang:_languages'
-            '(-f --force)'{-f,--force}'[Force download of translations files.]'
-            "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
-            '(-a --all)'{-a,--all}'[Fetch all translation files from server (even new ones)]'
-            '(-s --source)'{-s,--source}'[Force the fetching of the source file (default: False)]'
-            '--disable-overwrite[Use this flag if you want to disable to fetch new translations files and replace existing ones]'
-            '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
-            "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
+            '(-r --resource)'{-r,--resource}'=[Specify the resource]:resource:_resources'
+            '(-l --language)'{-l,--language}'=[Specify the language of translations]:lang:_languages'
+            '(-f --force)'{-f,--force}'[Download files forcefully]'
+            "--skip[Don't stop on errors]"
+            '(-a --all)'{-a,--all}'[Fetch all translation files from server]'
+            '(-s --source)'{-s,--source}'[Force the fetching of the source file]'
+            '--disable-overwrite[Disable to fetch new translations files and replace existing ones]'
+            '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it]'
+            "--mode=[Specify the mode of the translation file to pull]:mode:(reviewed translator developer)"
           )
           ;;
         push)
           opts+=(
-            '(-r --resource)'{-r,--resource}'=[Specify the resource for which you want to push the translations (defaults to all)]:resource:_resources'
-            '(-l --language)'{-l,--language}'=[Specify which translations you want to push (defaults to all)]:lang:_languages'
-            '(-f --force)'{-f,--force}'[Push source files without checking modification times.]'
-            "--skip[Don't stop on errors. Useful when pushing many files concurrently.]"
-            '(-s --source)'{-s,--source}'[Push the source file to the server.]'
+            '(-r --resource)'{-r,--resource}'=[Specify the resource]:resource:_resources'
+            '(-l --language)'{-l,--language}'=[Specify the language of translations]:lang:_languages'
+            '(-f --force)'{-f,--force}'[Push files forcefully]'
+            "--skip[Don't stop on errors]"
+            '(-s --source)'{-s,--source}'[Push the source file to the server]'
             '(-t --translations)'{-t,--translations}'[Push the translation files to the server]'
-            "--no-interactive[Don't require user input when forcing a push.]"
+            "--no-interactive[Don't require user input when forcing a push]"
           )
           ;;
         set)
           opts+=(
-            '(-r --resource)'{-r,--resource}"=[Specify the slug of the resource that you're setting up.]:resource:_resources"
-            "(-l --language --auto-local --auto-remote)--language=:[Specify which translations you want to pull.]:lang:_languages"
-            "(-l --language --auto-local --auto-remote)-l=:[Specify which translations you want to pull.]:lang:_languages"
-            '(-l --language --auto-local --auto-remote)--auto-local[Used when auto configuring local project.]'
-            '(-l --language --auto-local --auto-remote)--auto-remote[Used when adding remote files from Transifex server.]:url:_urls'
-            "--source[Specify that the given file is a source file (doesn't work with the --auto-* commands).]"
-            '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it.]'
-            "--mode=[Specify the mode of the translation file to pull (e.g. 'reviewed').]:mode"
-            '(-t --type)'{-t,--type}'[Specify the i18n type of the resource(s). This is only needed, if the resource(s) does not exist yet in Transifex.]'
-            '(-s --source-language)'{-s,--source-language}'=[Specify the source language of a resource (requires --auto-local).]:lang:_languages'
-            '(-f --source-file)'{-f,--source-file}'=[Specify the source file of a resource (requires --auto-local).]:file:_files'
-            '--execute[Execute commands (requires --auto-local).]'
+            '(-r --resource)'{-r,--resource}"=[Specify the slug of the resource]:resource:_resources"
+            "(-l --language --auto-local --auto-remote)--language=[Specify the language of translations]:lang:_languages"
+            "(-l --language --auto-local --auto-remote)-l=[Specify the language of translations]:lang:_languages"
+            '(-l --language --auto-local --auto-remote)--auto-local[Used when auto configuring local project]'
+            '(-l --language --auto-local --auto-remote)--auto-remote[Used when adding remote files from Transifex server]:url:_urls'
+            "(--auto-local --auto-remote)--source[Specify that the given file is a source file]"
+            '--minimun-prec=[Specify the minimum acceptable percentage of a translation in order to download it]'
+            "--mode=[Specify the mode of the translation file to pull]:mode:(reviewed translator developer)"
+            '(-t --type)'{-t,--type}'[Specify the i18n type of the resource(s)]'
+            '(-s --source-language)'{-s,--source-language}'=[Specify the source language of a resource]:lang:_languages'
+            '(-f --source-file)'{-f,--source-file}'=[Specify the source file of a resource]:file:_files'
+            '--execute[Execute commands]'
           )
           ;;
         status)
