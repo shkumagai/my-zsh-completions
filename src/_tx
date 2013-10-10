@@ -1,66 +1,23 @@
 #compdef tx
 
-(( $+functions[_resources] )) ||
-_resources () {
-  local expl
-  _wanted resources expl 'resource' _path_files -W "(translations)"
-}
-
-(( $+functions[_tx_get_languages_with_cache] )) ||
-_tx_get_languages_with_cache () {
-  local cache_policy
-  zstyle -s ":completion:${curcontext}:" cache-policy cache_policy
-  if [[ -z "$cache_policy" ]]; then
-    zstyle ":completion:${curcontext}:" cache-policy _tx_langs_caching_policy
-  fi
-
-  typeset -g -a _tx_langs
-  local expl
-
-  if ( (( #_tx_langs == 0 )) || _cache_invalid txlangs ) \
-       && ! _retrieve_cache txlangs; then
-    local _u _p
-    _u=($(command grep username ${HOME}/.transifexrc | sed 's/^.* //g'))
-    _p=($(command grep password ${HOME}/.transifexrc | sed 's/^.* //g'))
-    _tx_langs=(${${(f)"$(
-      command curl -i -L \
-                   --user ${_u}:${_p} \
-                   -X GET https://www.transifex.com/api/2/languages/ 2> /dev/null \
-      | command grep code \
-      | command sed 's/^.*: \"//g')"}/\", /})
-    _store_cache txlangs _tx_langs
-  fi
-  languages=(${_tx_langs})
-}
-
-(( $+functions[_tx_get_languages_without_cache] )) ||
-_tx_get_languages_without_cache () {
-  local expl
-
-  languages=(${${LANG%%.*?}} ${${LANG%%.*?}%%_*?})
-}
-
-(( $+functions[_tx_langs_caching_policy] )) ||
-_tx_langs_caching_policy () {
-  local -a oldp
-  oldp=( "$1"(Nmw+1) )
-  (( $#oldp ))
-}
-
-(( $+functions[_languages] )) ||
-_languages () {
-  if zstyle -t ":completion:${curcontext}:" use-cache; then
-    _tx_get_languages_with_cache
-  else
-    _tx_get_languages_without_cache
-  fi
-
-  # print "languages=$languages"
-  _describe -t languages 'tx available languages' languages
-}
+# ------------------------------------------------------------------------------
+# Description
+# -----------
+#
+#  Completion script for tx (transifex-client), based on v0.9.1
+#
+#  Last updated: 10.10.2013
+#
+# ------------------------------------------------------------------------------
+# Authors
+# -------
+#
+#  * shkumagai ( https://github.com/shkumagai )
+#
+# ------------------------------------------------------------------------------
 
 _tx () {
-  local state context line
+  local state context line ret=1
   typeset -A opt_args
 
   typeset -a _tx_subcommand
@@ -80,7 +37,8 @@ _tx () {
     '(--root -r)'{--root,-r}'=[change root directory (default is cwd)]' \
     --traceback'[print full traceback on exceptions]' \
     --disable-colors'[disable colors in the output of commands]' \
-    '*::tx-commands:->subcommands'
+    '*::tx-commands:->subcommands' \
+  && ret=0
 
   if [[ "$state" == "subcommands" ]]; then
     # print "words=${(qqq)^^words[@]}"
@@ -158,10 +116,70 @@ _tx () {
           )
           ;;
       esac
-      # print "opts=${(qqq)opts}"
-      _arguments -s $opts
+
+      _arguments -s $opts && ret=0
     fi
   fi
+
+  return ret
+}
+
+(( $+functions[_resources] )) ||
+_resources () {
+  local expl
+  _wanted resources expl 'resource' _path_files -W "(translations)"
+}
+
+(( $+functions[_languages] )) ||
+_languages () {
+  if zstyle -t ":completion:${curcontext}:" use-cache; then
+    _tx_get_languages_with_cache
+  else
+    _tx_get_languages_without_cache
+  fi
+
+  _describe -t languages 'tx available languages' languages
+}
+
+(( $+functions[_tx_get_languages_with_cache] )) ||
+_tx_get_languages_with_cache () {
+  local cache_policy
+  zstyle -s ":completion:${curcontext}:" cache-policy cache_policy
+  if [[ -z "$cache_policy" ]]; then
+    zstyle ":completion:${curcontext}:" cache-policy _tx_langs_caching_policy
+  fi
+
+  typeset -g -a _tx_langs
+  local expl
+  if ( (( #_tx_langs == 0 )) || _cache_invalid txlangs ) \
+       && ! _retrieve_cache txlangs; then
+    local _u _p
+    _u=($(command grep username ${HOME}/.transifexrc | sed 's/^.* //g'))
+    _p=($(command grep password ${HOME}/.transifexrc | sed 's/^.* //g'))
+    _tx_langs=(${${(f)"$(
+      command curl -i -L --user ${_u}:${_p} \
+                   -X GET https://www.transifex.com/api/2/languages/ 2> /dev/null \
+      | command grep code \
+      | command sed 's/^.*: \"//g')
+    "}/\", /})
+    _store_cache txlangs _tx_langs
+  fi
+  languages=(${_tx_langs})
+}
+
+(( $+functions[_tx_get_languages_without_cache] )) ||
+_tx_get_languages_without_cache () {
+  local expl
+  languages=(${${LANG%%.*?}} ${${LANG%%.*?}%%_*?})
+}
+
+(( $+functions[_tx_langs_caching_policy] )) ||
+_tx_langs_caching_policy () {
+  local -a oldp
+  oldp=( "$1"(Nmw+1) )
+  (( $#oldp )) && return 0
+
+  return 1
 }
 
 _tx "$@"
