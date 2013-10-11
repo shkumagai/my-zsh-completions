@@ -4,17 +4,17 @@ declare -ga common_opts
 common_opts=(
     '(--ask-pass -k)'{--ask-pass=,-k}'[ask for SSH password]'
     '(--ask-sudo-pass -K)'{--ask-sudo-pass=,-K}'[ask for sudo password]'
-    '(--check -C)'{--check,-C}'[do not make any changes, instead try to predict some of the changes that may occur]'
-    '(--connection -c)'{--connection=,-c}'[connection type to use (default=smart)]:connection:(smart ssh paramiko)'
-    '(--forks -f)'{--forks=,-f}'[specify number of parallel processes to use (default=5)]:number'
+    '(--check -C)'{--check,-C}'[do not make any changes]'
+    '(--connection -c)'{--connection=,-c}'[connection type to use]:connection:(smart ssh paramiko)'
+    '(--forks -f)'{--forks=,-f}'[specify number of parallel processes to use (default=5)]:number:'
     '(--help -h)'{--help,-h}'[show this help message and exit]'
-    '(--inventory-file -i)'{--inventory-file=,-f}'[specify inventory host file (default=/etc/ansible/hosts)]:inventory file:_files'
-    '(--limit -l)'{--limit=,-l}'[further limit selected hosts to an additional pattern]:number'
+    '(--inventory-file -i)'{--inventory-file=,-f}'[specify inventory host file]:inventory file:_files'
+    '(--limit -l)'{--limit=,-l}'[further limit selected hosts to an additional pattern]:number:'
     '(--module-path -M)'{--module-path=,-M}'[specify path(s) to module library]'
     '--private-key=[use this file to authenticate the connection]'
-    '(--sudo -s)'{--sudo,-s}'[run operations with sudo (nopasswd)]'
-    '(--sudo-user -U)'{--sudo-user=,-U}'[desired sudo user (default=root)]'
-    '(--timeout -t)'{--timeout=,-t}'[override the SSH timeout in seconds (default=10)]:number'
+    '(--sudo -s)'{--sudo,-s}'[run operations with sudo (no passwd)]'
+    '(--sudo-user -U)'{--sudo-user=,-U}'[desired sudo user]:user name:_users'
+    '(--timeout -t)'{--timeout=,-t}'[override the SSH timeout]:number (sec):'
     '(--user -u)'{--user=,-u}'[connect as this user]:user name:_users'
     '(-v -vvv)--verbose[verbose mode]'
     '(-vvv)-v[verbose mode]'
@@ -24,47 +24,45 @@ common_opts=(
 
 _ansible () {
   # echo "ansible -> $service"
-
+  local -a opts
   case "$service" in
     ansible-playbook)
-      _arguments \
-        $common_opts \
-        '(--diff -D)'{--diff,-D}'[when changing (small) files and templates, show the differences in those files, works great with --check]' \
-        '(--extra-vars -E)'{--extra-vars=,-E}'[set additional key=value variables from the CLI]' \
-        '--list-hosts[dump out a list of hosts, each play will run against, does not run playbook!]' \
-        '--list-tasks[do list all tasks that would be executed]' \
-        '--start-at-task=[start the playbook with a task matching this name]' \
-        '--step[one-step-at-a-time: confirm each task before running]' \
-        '--syntax-check[do a playbook syntax check on the playbook, do not execute the playbook]' \
-        '(--tags -t)'{--tags=,-t}'[only run plays and tasks tagged with these values]' \
-        '*:yaml files:_files' \
-        && ret=0
+      opts+=(
+        $common_opts
+        '(--diff -D)'{--diff,-D}'[show the differences in modified files]'
+        '(--extra-vars -E)'{--extra-vars=,-E}'[set additional key=value variables]'
+        '--list-hosts[dump out a list of hosts]'
+        '--list-tasks[do list all tasks that would be executed]'
+        '--start-at-task=[start the playbook with a task matching this name]'
+        '--step[confirm each task before running]'
+        '--syntax-check[do a playbook syntax check on the playbook]'
+        '(--tags -t)'{--tags=,-t}'[only run plays and tasks tagged with these values]'
+      )
       ;;
     ansible-pull)
-      _arguments \
-        '(--help -h)'{--help,-h}'[show this help message and exit]' \
-        '(--inventory-file -i)'{--inventory-file=,-f}'[specify inventory host file (default=/etc/ansible/hosts)]:inventory file:_files' \
-        '--purge[Purge git checkout after playbook run]' \
-        '(--directory -d)'{--directory=,-d}'[Directory to clone git repository to]:directory:_files -/' \
-        '(--url -U)'{--url=,-U}'[URL of git repository]:repository url:_urls' \
-        '(--checkout -C)'{--checkout=,-C}'[Branch/Tag/Commit to checkout.  Defaults to HEAD.]' \
-        '*:yaml files:_files' \
-        && ret=0
+      opts+=(
+        '(--help -h)'{--help,-h}'[show this help message and exit]'
+        '(--inventory-file -i)'{--inventory-file=,-f}'[specify inventory host file]:inventory file:_files'
+        '--purge[Purge git checkout after playbook run]'
+        '(--directory -d)'{--directory=,-d}'[Directory to clone git repository to]:directory:_files -/'
+        '(--url -U)'{--url=,-U}'[URL of git repository]:repository url:_urls'
+        '(--checkout -C)'{--checkout=,-C}'[Branch/Tag/Commit to checkout]'
+      )
       ;;
     ansible)
-      _arguments \
-        $common_opts \
-        '(--args -a)'{--args=,-a}'[module arguments]' \
-        '(--background -B)'{--background=,-B}'[run asynchronously, failing after X seconds (default=N/A)]:number' \
-        '--list-hosts[dump out a list of hosts matching input pattern, does not execute any modules!]' \
-        '(--module-name -m)'{--module-name=,-m}'[module name to execute (default=command)]' \
-        '(--one-line -o)'{--one-line,-o}'[condense output]' \
-        '(--poll -P)'{--poll=,-P}'[set the poll interval if using -B (default=15)]:number' \
-        '(--tree -T)'{--tree=,-T}'[log output to this directory]:directory:_path_files -/' \
-        '*:files:_files' \
-        && ret=0
+      opts+=(
+        $common_opts
+        '(--args -a)'{--args=,-a}'[module arguments]'
+        '(--background -B)'{--background=,-B}'[run asynchronously, failing after X seconds]:number:'
+        '--list-hosts[dump out a list of hosts matching input pattern]'
+        '(--module-name -m)'{--module-name=,-m}'[module name to execute]'
+        '(--one-line -o)'{--one-line,-o}'[condense output]'
+        '(--poll -P)'{--poll=,-P}'[set the poll interval if using -B]:number:'
+        '(--tree -T)'{--tree=,-T}'[log output to this directory]:directory:_path_files -/'
+      )
       ;;
   esac
+  _arguments -s $opts '*::yaml files:_files' && ret=0
 
   return ret
 }
