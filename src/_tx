@@ -154,12 +154,11 @@ _tx_get_languages_with_cache () {
     local _u _p
     _u=($(command grep username ${HOME}/.transifexrc | sed 's/^.* //g'))
     _p=($(command grep password ${HOME}/.transifexrc | sed 's/^.* //g'))
-    _tx_langs=(${${(f)"$(
-      command curl -i -L --user ${_u}:${_p} \
-                   -X GET https://www.transifex.com/api/2/languages/ 2> /dev/null \
+    _url="https://www.transifex.com/api/2/languages/"
+    _tx_langs=(${(f)"$(
+      command curl -i -L --user ${_u}:${_p} -X GET ${_url} 2> /dev/null \
       | command grep code \
-      | command sed 's/^.*: \"//g')
-    "}/\", /})
+      | command sed -e 's/^.*: \"//g' -e 's/\", *$//g')"})
     _store_cache txlangs _tx_langs
   fi
   languages=(${_tx_langs})
