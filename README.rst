@@ -22,6 +22,7 @@ and enable it in your ``.zshrc``:
 .. code-block:: zsh
 
     plugins+=(more-completions)
+    autoload -U compinit && compinit
 
 .. _oh-my-zsh: http://github.com/robbyrussell/oh-my-zsh
 
