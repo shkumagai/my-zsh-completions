@@ -22,7 +22,7 @@ and enable it in your ``.zshrc``:
 .. code-block:: zsh
 
     plugins+=(more-completions)
-    autoload -U compinit && compinit
+    autoload -U compinit && compinit ## Does not need to be run every zsh startup.
 
 .. _oh-my-zsh: http://github.com/robbyrussell/oh-my-zsh
 
